@@ -7,40 +7,44 @@ export const Navigation = () => {
   const [isDark, setIsDark] = useState(true);
 
   useEffect(() => {
-    // Initialize dark mode based on HTML class or default to dark
-    const htmlElement = document.documentElement;
-    const initialDark = htmlElement.classList.contains('dark');
-    setIsDark(initialDark);
+    // Check system preference or localStorage
+    const stored = localStorage.getItem('theme');
+    const systemPrefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
+    const shouldBeDark = stored === 'dark' || (!stored && systemPrefersDark);
     
-    // Ensure dark class is applied on initial load
-    if (!htmlElement.classList.contains('dark')) {
-      htmlElement.classList.add('dark');
+    // Apply theme to document
+    if (shouldBeDark) {
+      document.documentElement.classList.add('dark');
       setIsDark(true);
+    } else {
+      document.documentElement.classList.remove('dark');
+      setIsDark(false);
     }
   }, []);
 
   const toggleTheme = () => {
-    const htmlElement = document.documentElement;
     const newDarkMode = !isDark;
     
     if (newDarkMode) {
-      htmlElement.classList.add('dark');
+      document.documentElement.classList.add('dark');
+      localStorage.setItem('theme', 'dark');
     } else {
-      htmlElement.classList.remove('dark');
+      document.documentElement.classList.remove('dark');
+      localStorage.setItem('theme', 'light');
     }
     
     setIsDark(newDarkMode);
   };
 
   return (
-    <nav className="border-b border-slate-700/50 bg-slate-900/80 backdrop-blur-md">
+    <nav className="border-b bg-background/80 backdrop-blur-md">
       <div className="container mx-auto px-4 py-4">
         <div className="flex items-center justify-between">
           <div className="flex items-center space-x-3">
             <div className="w-10 h-10 bg-gradient-to-r from-blue-500 to-purple-600 rounded-lg flex items-center justify-center">
               <Shield className="w-6 h-6 text-white" />
             </div>
-            <span className="text-xl font-bold text-white">VaultSync</span>
+            <span className="text-xl font-bold text-foreground">VaultSync</span>
           </div>
           
           <div className="flex items-center space-x-4">
@@ -48,7 +52,7 @@ export const Navigation = () => {
               variant="ghost"
               size="sm"
               onClick={toggleTheme}
-              className="text-slate-300 hover:text-white hover:bg-slate-700/50"
+              className="text-muted-foreground hover:text-foreground"
             >
               {isDark ? <Sun className="w-4 h-4" /> : <Moon className="w-4 h-4" />}
             </Button>
@@ -56,7 +60,7 @@ export const Navigation = () => {
             <Button
               variant="ghost"
               size="sm"
-              className="text-slate-300 hover:text-white hover:bg-slate-700/50"
+              className="text-muted-foreground hover:text-foreground"
             >
               <Github className="w-4 h-4 mr-2" />
               GitHub
