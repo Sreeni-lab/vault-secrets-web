@@ -1,14 +1,35 @@
 
 import { Button } from "@/components/ui/button";
 import { Moon, Sun, Github, Shield } from "lucide-react";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 
 export const Navigation = () => {
   const [isDark, setIsDark] = useState(true);
 
+  useEffect(() => {
+    // Initialize dark mode based on HTML class or default to dark
+    const htmlElement = document.documentElement;
+    const initialDark = htmlElement.classList.contains('dark');
+    setIsDark(initialDark);
+    
+    // Ensure dark class is applied on initial load
+    if (!htmlElement.classList.contains('dark')) {
+      htmlElement.classList.add('dark');
+      setIsDark(true);
+    }
+  }, []);
+
   const toggleTheme = () => {
-    setIsDark(!isDark);
-    document.documentElement.classList.toggle('dark');
+    const htmlElement = document.documentElement;
+    const newDarkMode = !isDark;
+    
+    if (newDarkMode) {
+      htmlElement.classList.add('dark');
+    } else {
+      htmlElement.classList.remove('dark');
+    }
+    
+    setIsDark(newDarkMode);
   };
 
   return (
