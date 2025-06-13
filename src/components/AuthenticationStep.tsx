@@ -4,9 +4,10 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Card } from "@/components/ui/card";
-import { Shield, Eye, EyeOff, Loader2, CheckCircle, AlertCircle } from "lucide-react";
+import { Shield, Eye, EyeOff, Loader2, CheckCircle, AlertCircle, Info } from "lucide-react";
 import { VaultConfig } from "@/pages/Index";
 import { toast } from "sonner";
+import { VaultProxy } from "@/utils/vaultProxy";
 
 interface AuthenticationStepProps {
   config: VaultConfig;
@@ -33,32 +34,40 @@ export const AuthenticationStep = ({
     setAuthStatus('idle');
 
     try {
-      // First check if Vault URL is reachable with better error handling
-      console.log('Attempting to connect to Vault:', config.url);
+      console.log('Testing Vault connection:', config.url);
       
-      const healthCheck = await fetch(`${config.url}/v1/sys/health`, {
-        method: 'GET',
-        mode: 'cors',
-        headers: {
-          'Accept': 'application/json',
-        }
-      }).catch(error => {
-        console.error('Health check failed:', error);
-        throw new Error('Cannot connect to Vault server. This is likely due to CORS policy. Please ensure your Vault server is configured to allow cross-origin requests from this domain.');
-      });
-
-      console.log('Health check response status:', healthCheck.status);
-
-      // Vault health endpoint can return various status codes
-      if (!healthCheck.ok && ![200, 429, 472, 473, 501, 503].includes(healthCheck.status)) {
-        throw new Error(`Vault server returned status ${healthCheck.status}. Please check your Vault URL.`);
+      // Test connection first
+      const connectionOk = await VaultProxy.testConnection(config.url);
+      if (!connectionOk) {
+        throw new Error('Cannot connect to Vault server');
       }
 
       // Authenticate based on the selected method
+      let authResult;
       if (config.authMode === 'token') {
-        await authenticateWithToken();
+        if (!config.token) {
+          throw new Error('Token is required');
+        }
+        authResult = await VaultProxy.authenticateToken(config.url, config.token, config.namespace);
       } else {
-        await authenticateWithAppRole();
+        if (!config.roleId || !config.secretId) {
+          throw new Error('Role ID and Secret ID are required');
+        }
+        authResult = await VaultProxy.authenticateAppRole(
+          config.url, 
+          config.roleId, 
+          config.secretId, 
+          config.namespace
+        );
+      }
+
+      if (!authResult.success) {
+        throw new Error(authResult.error || 'Authentication failed');
+      }
+
+      // Update config with token if we got one from AppRole
+      if (authResult.token && config.authMode === 'approle') {
+        setConfig({ ...config, token: authResult.token });
       }
 
       setAuthStatus('success');
@@ -76,103 +85,6 @@ export const AuthenticationStep = ({
     } finally {
       setIsLoading(false);
     }
-  };
-
-  const authenticateWithToken = async () => {
-    if (!config.token) {
-      throw new Error('Token is required');
-    }
-
-    console.log('Attempting token authentication...');
-
-    const headers: Record<string, string> = {
-      'X-Vault-Token': config.token,
-      'Accept': 'application/json',
-    };
-
-    if (config.namespace) {
-      headers['X-Vault-Namespace'] = config.namespace;
-    }
-
-    const response = await fetch(`${config.url}/v1/auth/token/lookup-self`, {
-      method: 'GET',
-      headers,
-      mode: 'cors'
-    }).catch(error => {
-      console.error('Token lookup failed:', error);
-      throw new Error('Cannot validate token. Please check CORS configuration on your Vault server.');
-    });
-
-    console.log('Token lookup response status:', response.status);
-
-    if (!response.ok) {
-      if (response.status === 403) {
-        throw new Error('Invalid Vault token or insufficient permissions');
-      } else if (response.status === 404) {
-        throw new Error('Token authentication endpoint not found. Please check your Vault configuration.');
-      } else {
-        throw new Error(`Token validation failed with status ${response.status}`);
-      }
-    }
-
-    const data = await response.json();
-    console.log('Token validation successful');
-  };
-
-  const authenticateWithAppRole = async () => {
-    if (!config.roleId || !config.secretId) {
-      throw new Error('Role ID and Secret ID are required');
-    }
-
-    console.log('Attempting AppRole authentication...');
-
-    const authUrl = config.namespace 
-      ? `${config.url}/v1/${config.namespace}/auth/approle/login`
-      : `${config.url}/v1/auth/approle/login`;
-
-    const headers: Record<string, string> = {
-      'Content-Type': 'application/json',
-      'Accept': 'application/json',
-    };
-
-    if (config.namespace) {
-      headers['X-Vault-Namespace'] = config.namespace;
-    }
-
-    const response = await fetch(authUrl, {
-      method: 'POST',
-      headers,
-      body: JSON.stringify({
-        role_id: config.roleId,
-        secret_id: config.secretId
-      }),
-      mode: 'cors'
-    }).catch(error => {
-      console.error('AppRole login failed:', error);
-      throw new Error('Cannot authenticate with AppRole. Please check CORS configuration on your Vault server.');
-    });
-
-    console.log('AppRole response status:', response.status);
-
-    if (!response.ok) {
-      if (response.status === 400) {
-        throw new Error('Invalid Role ID or Secret ID');
-      } else if (response.status === 404) {
-        throw new Error('AppRole authentication endpoint not found. Please check your Vault configuration.');
-      } else {
-        throw new Error(`AppRole authentication failed with status ${response.status}`);
-      }
-    }
-
-    const data = await response.json();
-    const token = data.auth?.client_token;
-    
-    if (!token) {
-      throw new Error('No token received from AppRole authentication');
-    }
-
-    console.log('AppRole authentication successful');
-    setConfig({ ...config, token });
   };
 
   const handleSubmit = (e: React.FormEvent) => {
@@ -286,23 +198,22 @@ export const AuthenticationStep = ({
               <span className={authStatus === 'success' ? 'text-green-400' : 'text-red-400'}>
                 {authStatus === 'success' 
                   ? 'Authentication successful! Proceeding to next step...'
-                  : 'Authentication failed. Please check your credentials and CORS configuration.'
+                  : 'Authentication failed. Please check your credentials.'
                 }
               </span>
             </div>
           </Card>
         )}
 
-        {/* CORS Information Card */}
+        {/* Proxy Information Card */}
         <Card className="p-4 bg-blue-500/10 border-blue-500/30">
           <div className="flex items-start">
-            <AlertCircle className="w-5 h-5 text-blue-400 mr-3 mt-0.5" />
+            <Info className="w-5 h-5 text-blue-400 mr-3 mt-0.5" />
             <div className="text-blue-400 text-sm">
-              <div className="font-medium mb-1">CORS Configuration Required</div>
+              <div className="font-medium mb-1">Demo Mode Active</div>
               <div>
-                If authentication fails, your Vault server needs to allow cross-origin requests. 
-                Add <code className="bg-slate-800 px-1 rounded">ui = true</code> to your Vault configuration 
-                or configure CORS headers appropriately.
+                This demo uses mock authentication to avoid CORS issues. In production, 
+                implement a backend proxy to handle Vault API calls securely.
               </div>
             </div>
           </div>
