@@ -11,7 +11,7 @@ export const Navigation = () => {
     const stored = localStorage.getItem('theme');
     const systemPrefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
     const shouldBeDark = stored === 'dark' || (!stored && systemPrefersDark);
-    
+
     // Apply theme to document
     if (shouldBeDark) {
       document.documentElement.classList.add('dark');
@@ -24,7 +24,7 @@ export const Navigation = () => {
 
   const toggleTheme = () => {
     const newDarkMode = !isDark;
-    
+
     if (newDarkMode) {
       document.documentElement.classList.add('dark');
       localStorage.setItem('theme', 'dark');
@@ -32,7 +32,7 @@ export const Navigation = () => {
       document.documentElement.classList.remove('dark');
       localStorage.setItem('theme', 'light');
     }
-    
+
     setIsDark(newDarkMode);
   };
 
@@ -44,9 +44,9 @@ export const Navigation = () => {
             <div className="w-10 h-10 bg-gradient-to-r from-blue-500 to-purple-600 rounded-lg flex items-center justify-center">
               <Shield className="w-6 h-6 text-white" />
             </div>
-            <span className="text-xl font-bold text-foreground">VaultSync</span>
+            <span className="text-xl font-bold text-foreground">VaultInjector</span>
           </div>
-          
+
           <div className="flex items-center space-x-4">
             <Button
               variant="ghost"
@@ -56,7 +56,7 @@ export const Navigation = () => {
             >
               {isDark ? <Sun className="w-4 h-4" /> : <Moon className="w-4 h-4" />}
             </Button>
-            
+
             <Button
               variant="ghost"
               size="sm"

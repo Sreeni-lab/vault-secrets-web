@@ -57,16 +57,16 @@ const Index = () => {
   return (
     <div className="min-h-screen bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900">
       {/* Background Pattern */}
-      <div 
+      <div
         className="absolute inset-0 opacity-20"
         style={{
           backgroundImage: `url("data:image/svg+xml,%3Csvg width='20' height='20' viewBox='0 0 20 20' xmlns='http://www.w3.org/2000/svg'%3E%3Cg fill='%23ffffff' fill-opacity='0.02'%3E%3Ccircle cx='3' cy='3' r='3'/%3E%3C/g%3E%3C/svg%3E")`
         }}
       />
-      
+
       <div className="relative z-10">
         <Navigation />
-        
+
         <div className="container mx-auto px-4 py-8">
           {/* Header */}
           <div className="text-center mb-12 animate-fade-in">
@@ -74,10 +74,10 @@ const Index = () => {
               <Shield className="w-8 h-8 text-white" />
             </div>
             <h1 className="text-4xl font-bold text-white mb-4">
-              Vault Secrets Manager
+              Effortless Secret Injection into HashiCorp Vault
             </h1>
             <p className="text-xl text-slate-300 max-w-2xl mx-auto">
-              Securely upload and manage your secrets in HashiCorp Vault with our modern interface
+              VaultInjector is a lightweight, script-driven tool designed to simplify the process of importing secrets into HashiCorp Vault from a CSV file.
             </p>
           </div>
 
@@ -88,12 +88,12 @@ const Index = () => {
                 const Icon = step.icon;
                 const isActive = step.id === currentStep;
                 const isCompleted = step.id < currentStep;
-                
+
                 return (
                   <div key={step.id} className="flex flex-col items-center relative z-10">
                     <div className={`
                       w-12 h-12 rounded-full flex items-center justify-center mb-2 transition-all duration-300
-                      ${isActive ? 'bg-gradient-to-r from-blue-500 to-purple-600 scale-110' : 
+                      ${isActive ? 'bg-gradient-to-r from-blue-500 to-purple-600 scale-110' :
                         isCompleted ? 'bg-green-500' : 'bg-slate-700'}
                     `}>
                       <Icon className="w-6 h-6 text-white" />
@@ -107,10 +107,10 @@ const Index = () => {
                   </div>
                 );
               })}
-              
+
               {/* Progress Line */}
               <div className="absolute top-6 left-6 right-6 h-0.5 bg-slate-700 -z-10">
-                <div 
+                <div
                   className="h-full bg-gradient-to-r from-blue-500 to-purple-600 transition-all duration-500 ease-out"
                   style={{ width: `${((currentStep - 1) / (steps.length - 1)) * 100}%` }}
                 />
@@ -123,13 +123,13 @@ const Index = () => {
             <Card className="bg-slate-800/50 border-slate-700 backdrop-blur-sm animate-scale-in">
               <div className="p-8">
                 {currentStep === 1 && (
-                  <ConfigurationStep 
+                  <ConfigurationStep
                     config={vaultConfig}
                     setConfig={setVaultConfig}
                     onNext={nextStep}
                   />
                 )}
-                
+
                 {currentStep === 2 && (
                   <AuthenticationStep
                     config={vaultConfig}
@@ -139,7 +139,7 @@ const Index = () => {
                     setIsAuthenticated={setIsAuthenticated}
                   />
                 )}
-                
+
                 {currentStep === 3 && (
                   <FileUploadStep
                     secrets={secrets}
@@ -148,7 +148,7 @@ const Index = () => {
                     onPrev={prevStep}
                   />
                 )}
-                
+
                 {currentStep === 4 && (
                   <ProgressStep
                     config={vaultConfig}

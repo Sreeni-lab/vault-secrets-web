@@ -17,12 +17,12 @@ interface AuthenticationStepProps {
   setIsAuthenticated: (auth: boolean) => void;
 }
 
-export const AuthenticationStep = ({ 
-  config, 
-  setConfig, 
-  onNext, 
-  onPrev, 
-  setIsAuthenticated 
+export const AuthenticationStep = ({
+  config,
+  setConfig,
+  onNext,
+  onPrev,
+  setIsAuthenticated
 }: AuthenticationStepProps) => {
   const [showToken, setShowToken] = useState(false);
   const [showSecretId, setShowSecretId] = useState(false);
@@ -35,7 +35,7 @@ export const AuthenticationStep = ({
 
     try {
       console.log('Testing Vault connection:', config.url);
-      
+
       // Test connection first
       const connectionOk = await VaultProxy.testConnection(config.url);
       if (!connectionOk) {
@@ -54,9 +54,9 @@ export const AuthenticationStep = ({
           throw new Error('Role ID and Secret ID are required');
         }
         authResult = await VaultProxy.authenticateAppRole(
-          config.url, 
-          config.roleId, 
-          config.secretId, 
+          config.url,
+          config.roleId,
+          config.secretId,
           config.namespace
         );
       }
@@ -73,7 +73,7 @@ export const AuthenticationStep = ({
       setAuthStatus('success');
       setIsAuthenticated(true);
       toast.success("Authentication successful!");
-      
+
       setTimeout(() => {
         onNext();
       }, 1000);
@@ -100,7 +100,7 @@ export const AuthenticationStep = ({
         </div>
         <h2 className="text-2xl font-bold text-white mb-2">Authenticate to Vault</h2>
         <p className="text-slate-400">
-          {config.authMode === 'token' 
+          {config.authMode === 'token'
             ? 'Enter your Vault token to authenticate'
             : 'Enter your AppRole credentials to authenticate'
           }
@@ -152,7 +152,7 @@ export const AuthenticationStep = ({
                   required
                 />
               </div>
-              
+
               <div>
                 <Label htmlFor="secret-id" className="text-white flex items-center mb-2">
                   <Shield className="w-4 h-4 mr-2" />
@@ -184,11 +184,10 @@ export const AuthenticationStep = ({
         </Card>
 
         {authStatus !== 'idle' && (
-          <Card className={`p-4 border ${
-            authStatus === 'success' 
-              ? 'bg-green-500/10 border-green-500/30' 
-              : 'bg-red-500/10 border-red-500/30'
-          }`}>
+          <Card className={`p-4 border ${authStatus === 'success'
+            ? 'bg-green-500/10 border-green-500/30'
+            : 'bg-red-500/10 border-red-500/30'
+            }`}>
             <div className="flex items-center">
               {authStatus === 'success' ? (
                 <CheckCircle className="w-5 h-5 text-green-400 mr-3" />
@@ -196,7 +195,7 @@ export const AuthenticationStep = ({
                 <AlertCircle className="w-5 h-5 text-red-400 mr-3" />
               )}
               <span className={authStatus === 'success' ? 'text-green-400' : 'text-red-400'}>
-                {authStatus === 'success' 
+                {authStatus === 'success'
                   ? 'Authentication successful! Proceeding to next step...'
                   : 'Authentication failed. Please check your credentials.'
                 }
@@ -205,7 +204,7 @@ export const AuthenticationStep = ({
           </Card>
         )}
 
-        {/* Proxy Information Card */}
+        {/* Proxy Information Card
         <Card className="p-4 bg-blue-500/10 border-blue-500/30">
           <div className="flex items-start">
             <Info className="w-5 h-5 text-blue-400 mr-3 mt-0.5" />
@@ -217,7 +216,7 @@ export const AuthenticationStep = ({
               </div>
             </div>
           </div>
-        </Card>
+        </Card> */}
 
         <div className="flex justify-between">
           <Button
@@ -228,7 +227,7 @@ export const AuthenticationStep = ({
           >
             Back
           </Button>
-          
+
           <Button
             type="submit"
             disabled={isLoading || authStatus === 'success'}
